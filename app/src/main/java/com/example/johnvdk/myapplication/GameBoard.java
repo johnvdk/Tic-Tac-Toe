@@ -2,19 +2,16 @@ package com.example.johnvdk.myapplication;
 
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.List;
 
 import static java.lang.Math.abs;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+public class GameBoard extends AppCompatActivity implements View.OnClickListener {
 
     private Button[][] buttons = new Button[3][3];
 
@@ -22,11 +19,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private int roundCount;
 
-    private ArrayList<Integer> maxIndex = new ArrayList();
-    private ArrayList<Integer> minIndex = new ArrayList();
-
     private int player1Points;
     private int player2Points;
+
+    private boolean computer = false;
 
     private TextView textViewPlayer1;
     private TextView textViewPlayer2;
@@ -37,10 +33,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_gameboard);
 
+        roundCount = 0;
         textViewPlayer1 = findViewById(R.id.text_view_p1);
         textViewPlayer2 = findViewById(R.id.text_view_p2);
+        if(getIntent().getIntExtra("numPlayer", 1) == 1){
+            computer = true;
+            textViewPlayer2.setText("Computer: " + 0);
+        }
 
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++){
@@ -68,26 +69,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         String[][] field = new String[3][3];
 
-        if (player1Turn) {
+        if (computer){
             ((Button) v).setText("X");
-        }
-
-        roundCount++;
-
-        for (int i = 0; i < 3; i++){
-            for (int j = 0; j < 3; j++) {
-                field[i][j] = buttons[i][j].getText().toString();
+            updateGameBoard(field);
+            roundCount++;
+            if(roundCount < 9){
+                getNextMove(field);
+                updateGameBoard(field);
             }
         }
-
-        if (roundCount % 2 == 1 && roundCount < 9) {
-            getNextMove(field);
-        }
-
-        for (int i = 0; i < 3; i++){
-            for (int j = 0; j < 3; j++) {
-                field[i][j] = buttons[i][j].getText().toString();
-            }
+        else{
+            if (roundCount%2 == 0){((Button) v).setText("X"); }
+            else{((Button) v).setText("O");}
+            updateGameBoard(field);
+            roundCount++;
         }
 
         if (checkForWin(field, "X")) {
@@ -98,6 +93,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             draw();
         }
 
+    }
+
+    private void updateGameBoard(String[][] gameBoard){
+        for (int i = 0; i < 3; i++){
+            for (int j = 0; j < 3; j++) {
+                gameBoard[i][j] = buttons[i][j].getText().toString();
+            }
+        }
     }
 
     private boolean checkForWin(String[][] field, String letter) {
@@ -140,7 +143,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void updatePointsText() {
         textViewPlayer1.setText("Player 1: " + player1Points);
-        textViewPlayer2.setText("Player 2: " + player2Points);
+        if (computer){
+            textViewPlayer2.setText("Computer: " + player2Points);
+        }
+        else{
+            textViewPlayer2.setText("Player 2: " + player2Points);
+        }
     }
 
     private void resetBoard() {
@@ -149,9 +157,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 buttons[i][j].setText("");
             }
         }
-
         roundCount = 0;
-        player1Turn = true;
     }
 
     private void resetGame() {
@@ -171,7 +177,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private int[] miniMax(String[][] gameBoard, int roundCount, String player, int maximum, int minimum){
-        //List<int[]> nextMoves  = getPossibleMoves(gameBoard, false);
         int score;
         int bestRow = -1;
         int bestCol = -1;
